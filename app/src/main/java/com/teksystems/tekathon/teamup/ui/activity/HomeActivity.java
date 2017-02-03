@@ -1,6 +1,7 @@
 package com.teksystems.tekathon.teamup.ui.activity;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import com.google.android.gms.location.places.Places;
 import com.teksystems.tekathon.teamup.R;
 import com.teksystems.tekathon.teamup.ui.fragment.NearMeFragment;
 import com.teksystems.tekathon.teamup.ui.fragment.PublishFragment;
+import com.teksystems.tekathon.teamup.ui.fragment.SettingFragment;
 import com.teksystems.tekathon.teamup.ui.fragment.TrendingFragment;
 
 public class HomeActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
@@ -26,6 +28,7 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
     private static final String TAG = "HomeActivity";
 
     private Fragment fragment;
+    boolean doubleBackToExitPressedOnce;
 
     private static final int GOOGLE_API_CLIENT_ID = 0;
     private GoogleApiClient mGoogleApiClient;
@@ -82,6 +85,11 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
                 fragment = new PublishFragment();
                 title = "Publish";
                 break;
+            case R.id.action_settings:
+                Log.i(TAG, "onNavigationItemSelected: Sessions Selected");
+                fragment = new SettingFragment();
+                title = "Settings";
+                break;
         }
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
@@ -108,4 +116,34 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
         Toast.makeText(HomeActivity.this, "We're unable to determine your Location due to Google Places API failure.", Toast.LENGTH_LONG).show();
     }
 
+    /**
+     * Handled back pressed button lifecycle.
+     */
+    @Override
+    public void onBackPressed() {
+        final FragmentManager supportFragmentManager = getSupportFragmentManager();
+        if (supportFragmentManager.getBackStackEntryCount() > 0) {
+            super.onBackPressed();
+        } else {
+            if (!doubleBackToExitPressedOnce) {
+                this.doubleBackToExitPressedOnce = true;
+                Toast.makeText(this, "Please click BACK again to exit.", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        doubleBackToExitPressedOnce = false;
+                    }
+                }, 2000);
+            } else {
+                try {
+                    super.onBackPressed();
+                    System.exit(0);
+                    return;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    super.onBackPressed();
+                }
+            }
+        }
+    }
 }
