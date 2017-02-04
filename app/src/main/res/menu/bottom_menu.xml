@@ -15,9 +15,9 @@
         android:icon="@drawable/ic_publish"
         android:title="Publish" />
 
-    <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_settings_applications"
-        android:title="Settings" />
+    <!--<item-->
+        <!--android:id="@+id/action_settings"-->
+        <!--android:icon="@drawable/ic_settings_applications"-->
+        <!--android:title="Settings" />-->
 
 </menu>

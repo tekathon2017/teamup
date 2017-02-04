@@ -3,13 +3,12 @@ package com.teksystems.tekathon.teamup.recyclerview.adapter;
 import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.support.v7.widget.RecyclerView;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.teksystems.tekathon.teamup.R;
-import com.teksystems.tekathon.teamup.databinding.TagListItemBinding;
+import com.teksystems.tekathon.teamup.databinding.TagListItem2Binding;
 import com.teksystems.tekathon.teamup.model.Tag;
 import com.teksystems.tekathon.teamup.ui.databinding.viewmodel.TagViewModel;
 
@@ -20,14 +19,12 @@ import java.util.List;
  * Created by Mayank Tiwari on 24/09/16.
  */
 
-public class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
+public class TagAdapter2 extends RecyclerView.Adapter<TagAdapter2.ViewHolder> {
 
     private List<Tag> tagList;
-
-    private final TypedValue mTypedValue = new TypedValue();
     private Context context;
 
-    public TagAdapter(Context context, List<Tag> tagList) {
+    public TagAdapter2(Context context, List<Tag> tagList) {
         this.context = context;
         this.tagList = tagList;
     }
@@ -45,7 +42,7 @@ public class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.tag_list_item, parent, false);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.tag_list_item2, parent, false);
         return new ViewHolder(view);
     }
 
@@ -63,7 +60,7 @@ public class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private TagListItemBinding binding;
+        private TagListItem2Binding binding;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -71,7 +68,7 @@ public class TagAdapter extends RecyclerView.Adapter<TagAdapter.ViewHolder> {
             binding = DataBindingUtil.bind(itemView);
         }
 
-        public TagListItemBinding getBinding() {
+        public TagListItem2Binding getBinding() {
             return binding;
         }
 

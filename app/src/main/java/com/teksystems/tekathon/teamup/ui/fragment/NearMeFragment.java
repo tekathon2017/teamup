@@ -8,12 +8,14 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.PendingResult;
@@ -27,29 +29,39 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.teksystems.tekathon.teamup.R;
+import com.teksystems.tekathon.teamup.callbacks.ItemSelectedCallback;
 import com.teksystems.tekathon.teamup.commons.MarshMallowPermission;
 import com.teksystems.tekathon.teamup.model.Tag;
+import com.teksystems.tekathon.teamup.model.User;
 import com.teksystems.tekathon.teamup.recyclerview.adapter.TagAdapter;
+import com.teksystems.tekathon.teamup.recyclerview.adapter.TagAdapter2;
 import com.teksystems.tekathon.teamup.ui.activity.HomeActivity;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Created by Mayank Tiwari on 04/02/17.
  */
 
-public class NearMeFragment extends Fragment implements OnMapReadyCallback {
+public class NearMeFragment extends Fragment implements OnMapReadyCallback, ItemSelectedCallback {
 
     private GoogleMap mMap;
     private RecyclerView tagRecyclerView;
 
     private MarshMallowPermission marshMallowPermission;
     private LatLngBounds.Builder mBounds = new LatLngBounds.Builder();
+
+    private LatLng userLatLng;
+    private Map<String, List<User>> interestMap;
 
     private static final String TAG = "NearMeFragment";
 
@@ -81,19 +93,81 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback {
         tagRecyclerView.setNestedScrollingEnabled(false);
 
         updateTags(loadDummyTags());
+        loadDummyUsers();
     }
 
     private List<Tag> loadDummyTags() {
         final List<Tag> tags = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 8; i++) {
             tags.add(new Tag("#TAG_" + (i + 1)));
         }
         return tags;
     }
 
+    private void loadDummyUsers() {
+        if (userLatLng == null) {
+            userLatLng = new LatLng(17.4471362, 78.3755905);
+        }
+        List<Tag> tags = loadDummyTags();
+        for (Tag tag : tags) {
+            Random random = new Random();
+            int i = random.nextInt(20) + 3;
+            List<User> users = new ArrayList<>();
+            for (int j = 0; j < i; j++) {
+                LatLng location = getLocation(userLatLng, 20);
+                User user = new User();
+                user.setLatLng(location);
+                user.setName("USER " + (j + 1));
+                users.add(user);
+            }
+            getInterestMap().put(tag.getName(), users);
+        }
+    }
+
+    public LatLng getLocation(LatLng latLng, int radius) {
+        Random random = new Random();
+
+        // Convert radius from meters to degrees
+        double radiusInDegrees = radius / 111000f;
+
+        double u = random.nextDouble();
+        double v = random.nextDouble();
+        double w = radiusInDegrees * Math.sqrt(u);
+        double t = 2 * Math.PI * v;
+        double x = w * Math.cos(t);
+        double y = w * Math.sin(t);
+
+        // Adjust the x-coordinate for the shrinking of the east-west distances
+        double new_x = x / Math.cos(Math.toRadians(latLng.latitude));
+
+        double foundLongitude = new_x + latLng.latitude;
+        double foundLatitude = y + latLng.longitude;
+
+        return new LatLng(foundLatitude, foundLongitude);
+    }
+
+    public Map<String, List<User>> getInterestMap() {
+        if (interestMap == null) {
+            interestMap = new HashMap<>();
+        }
+        return interestMap;
+    }
+
+    public void setInterestMap(Map<String, List<User>> interestMap) {
+        this.interestMap = interestMap;
+    }
+
     private void updateTags(List<Tag> tags) {
-        TagAdapter tagAdapter = new TagAdapter(getActivity(), getContext(), tags);
+        TagAdapter tagAdapter = new TagAdapter(getContext(), tags);
         tagRecyclerView.setAdapter(tagAdapter);
+    }
+
+    @Override
+    public void onItemSelected(boolean isSelected, Object itemObject, int listPosition) {
+        if (itemObject != null && (itemObject instanceof Tag)) {
+            Tag tag = (Tag) itemObject;
+            Log.i(TAG, "onItemSelected: " + tag.getName() + " " + (isSelected ? "selected" : "removed"));
+        }
     }
 
     private void getAddressByLatLong(LatLng latLong) {
@@ -135,6 +209,36 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback {
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {
+                return null;
+            }
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View customInfoView = getActivity().getLayoutInflater().inflate(R.layout.include_info_window_layout, null);
+                TextView personTextView = (TextView) customInfoView.findViewById(R.id.personNameTextView);
+                RecyclerView interestsRecyclerView = (RecyclerView) customInfoView.findViewById(R.id.interestsRecyclerView);
+
+                GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 3);
+//                LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+//                layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+                interestsRecyclerView.setLayoutManager(layoutManager);
+
+                Object markerTag = marker.getTag();
+                User user;
+                if ((markerTag != null) && (markerTag instanceof User)) {
+                    user = (User) markerTag;
+                    personTextView.setText(user.getName());
+
+                    List<Tag> interests = user.getInterests();
+                    TagAdapter2 tagAdapter2 = new TagAdapter2(getContext(), interests);
+                    interestsRecyclerView.setAdapter(tagAdapter2);
+                }
+                return customInfoView;
+            }
+        });
 //        mMap.setOnMarkerClickListener
 
         // Add a marker in Sydney and move the camera
@@ -161,6 +265,7 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback {
                 @Override
                 public void onMyLocationChange(Location location) {
                     LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
+                    plotDefaultCoord(ll);
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(ll, 15));
                     // we only want to grab the location once, to allow the user to pan and zoom freely.
                     mMap.setOnMyLocationChangeListener(null);
@@ -208,6 +313,9 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback {
 
                     Log.i(TAG, String.format("Place '%s' has best likelihood: %g", bestPlaceLikelihood.getPlace().getName(), bestPlaceLikelihood.getLikelihood()));
                     final LatLng latLng = bestPlaceLikelihood.getPlace().getLatLng();
+
+                    plotDefaultCoord(latLng);
+
                     getAddressByLatLong(latLng);
                     //Animate Camera
                     if (mMap != null) {
@@ -220,6 +328,22 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback {
                 likelyPlaces.release();
             }
         });
+    }
+
+    private void plotDefaultCoord(LatLng latLng) {
+        if (userLatLng == null) {
+            User user = new User();
+            user.setName("Me");
+            user.setInterests(loadDummyTags());
+
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.title("Me");
+            Marker marker = mMap.addMarker(markerOptions);
+            marker.setTag(user);
+
+            userLatLng = latLng;
+        }
     }
 
     private void addPointToViewPort(LatLng newPoint) {

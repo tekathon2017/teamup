@@ -20,8 +20,9 @@ import com.google.android.gms.location.places.Places;
 import com.teksystems.tekathon.teamup.R;
 import com.teksystems.tekathon.teamup.ui.fragment.NearMeFragment;
 import com.teksystems.tekathon.teamup.ui.fragment.PublishFragment;
-import com.teksystems.tekathon.teamup.ui.fragment.SettingFragment;
 import com.teksystems.tekathon.teamup.ui.fragment.TrendingFragment;
+
+import java.util.List;
 
 public class HomeActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener {
 
@@ -52,7 +53,6 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
     }
 
     private void init() {
-
         BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottomNavigationView);
         bottomNavigationView.setOnNavigationItemSelectedListener(
                 new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -63,6 +63,18 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
                     }
                 });
         loadFragmentId(R.id.action_near_me);
+    }
+
+    public Fragment getVisibleFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        List<Fragment> fragments = fragmentManager.getFragments();
+        if (fragments != null) {
+            for (Fragment fragment : fragments) {
+                if (fragment != null && fragment.isVisible())
+                    return fragment;
+            }
+        }
+        return null;
     }
 
     private void loadFragmentId(int id) {
@@ -85,11 +97,11 @@ public class HomeActivity extends AppCompatActivity implements GoogleApiClient.O
                 fragment = new PublishFragment();
                 title = "Publish";
                 break;
-            case R.id.action_settings:
-                Log.i(TAG, "onNavigationItemSelected: Sessions Selected");
-                fragment = new SettingFragment();
-                title = "Settings";
-                break;
+//            case R.id.action_settings:
+//                Log.i(TAG, "onNavigationItemSelected: Sessions Selected");
+//                fragment = new SettingFragment();
+//                title = "Settings";
+//                break;
         }
 
         FragmentTransaction transaction = fragmentManager.beginTransaction();
