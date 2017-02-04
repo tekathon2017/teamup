@@ -48,7 +48,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Any thoughts on this ? "
-                    android:inputType="textEmailAddress"
+                    android:inputType="text"
                     android:maxLines="0" />
 
             </android.support.design.widget.TextInputLayout>
