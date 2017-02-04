@@ -7,14 +7,22 @@ import android.graphics.drawable.Drawable;
 import android.support.design.widget.TextInputEditText;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.teksystems.tekathon.teamup.R;
+import com.teksystems.tekathon.teamup.model.Reply;
+import com.teksystems.tekathon.teamup.model.Topic;
+import com.teksystems.tekathon.teamup.recyclerview.adapter.ReplyAdapter;
+
+import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -58,6 +66,25 @@ public class CustomBindingUtils {
                 }
             }
         });
+    }
+
+    @BindingAdapter({"bind:items", "bind:parent"})
+    public static void nestedRecyclerView(RecyclerView recyclerView, List items, Object parent) {
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(recyclerView.getContext());
+        linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+
+        recyclerView.setLayoutManager(linearLayoutManager);
+
+        final String tag = recyclerView.getTag().toString();
+        if (tag.equals("ReplyGroup")) {
+            Log.d(TAG, "nestedRecyclerView: Loading RV for ReplyGroup");
+            Topic topic = (Topic) parent;
+            ReplyAdapter replyAdapter = new ReplyAdapter(recyclerView.getContext(), (List<Reply>) items, topic);
+            recyclerView.setAdapter(replyAdapter);
+        } else {
+            Log.d(TAG, "nestedRecyclerView: RV binding not found for items: " + items.getClass());
+        }
+
     }
 
     @BindingAdapter(value = {"bind:imageUrl", "bind:imageFillColor"}, requireAll = false)

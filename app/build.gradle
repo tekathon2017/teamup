@@ -16,6 +16,10 @@ android {
 
         vectorDrawables.useSupportLibrary = true
         setProperty("archivesBaseName", "$COMPANY_NAME-$APK_NAME-$versionName")
+
+//        jackOptions {
+//            enabled true
+//        }
     }
 
     dataBinding {
@@ -55,6 +59,10 @@ android {
         exclude 'META-INF/notice.txt'
         exclude 'META-INF/services/javax.annotation.processing.Processor'
         exclude 'META-INF/MANIFEST.MF'
+    }
+    compileOptions {
+        sourceCompatibility 1.7
+        targetCompatibility 1.7
     }
 }
 

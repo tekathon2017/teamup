@@ -61,7 +61,8 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
     private LatLngBounds.Builder mBounds = new LatLngBounds.Builder();
 
     private LatLng userLatLng;
-    private Map<String, List<User>> interestMap;
+    private Map<String, List<User>> allInterestMap;
+    private List<String> selectedTag;
 
     private static final String TAG = "NearMeFragment";
 
@@ -93,38 +94,44 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
         tagRecyclerView.setNestedScrollingEnabled(false);
 
         updateTags(loadDummyTags());
-        loadDummyUsers();
     }
 
     private List<Tag> loadDummyTags() {
         final List<Tag> tags = new ArrayList<>();
         for (int i = 0; i < 8; i++) {
-            tags.add(new Tag("#TAG_" + (i + 1)));
+            Tag tag = new Tag(i, "#TAG_" + (i + 1));
+            tags.add(tag);
         }
         return tags;
     }
 
     private void loadDummyUsers() {
         if (userLatLng == null) {
-            userLatLng = new LatLng(17.4471362, 78.3755905);
+            plotDefaultCoord(new LatLng(17.4471362, 78.3755905));
         }
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15));
+
         List<Tag> tags = loadDummyTags();
+        int k=1;
         for (Tag tag : tags) {
             Random random = new Random();
             int i = random.nextInt(20) + 3;
             List<User> users = new ArrayList<>();
             for (int j = 0; j < i; j++) {
-                LatLng location = getLocation(userLatLng, 20);
+                LatLng location = generateNearByLocation(userLatLng, 200);
                 User user = new User();
                 user.setLatLng(location);
-                user.setName("USER " + (j + 1));
+                user.setName("USER " + k);
+                user.getInterests().add(tag);
                 users.add(user);
+                k++;
             }
-            getInterestMap().put(tag.getName(), users);
+            getAllInterestMap().put(tag.getName(), users);
         }
     }
 
-    public LatLng getLocation(LatLng latLng, int radius) {
+    public LatLng generateNearByLocation(LatLng latLng, int radius) {
         Random random = new Random();
 
         // Convert radius from meters to degrees
@@ -138,23 +145,23 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
         double y = w * Math.sin(t);
 
         // Adjust the x-coordinate for the shrinking of the east-west distances
-        double new_x = x / Math.cos(Math.toRadians(latLng.latitude));
+        double new_x = x / Math.cos(Math.toRadians(latLng.longitude));
 
-        double foundLongitude = new_x + latLng.latitude;
-        double foundLatitude = y + latLng.longitude;
+        double foundLongitude = new_x + latLng.longitude;
+        double foundLatitude = y + latLng.latitude;
 
         return new LatLng(foundLatitude, foundLongitude);
     }
 
-    public Map<String, List<User>> getInterestMap() {
-        if (interestMap == null) {
-            interestMap = new HashMap<>();
+    public Map<String, List<User>> getAllInterestMap() {
+        if (allInterestMap == null) {
+            allInterestMap = new HashMap<>();
         }
-        return interestMap;
+        return allInterestMap;
     }
 
-    public void setInterestMap(Map<String, List<User>> interestMap) {
-        this.interestMap = interestMap;
+    public void setAllInterestMap(Map<String, List<User>> allInterestMap) {
+        this.allInterestMap = allInterestMap;
     }
 
     private void updateTags(List<Tag> tags) {
@@ -166,8 +173,38 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
     public void onItemSelected(boolean isSelected, Object itemObject, int listPosition) {
         if (itemObject != null && (itemObject instanceof Tag)) {
             Tag tag = (Tag) itemObject;
-            Log.i(TAG, "onItemSelected: " + tag.getName() + " " + (isSelected ? "selected" : "removed"));
+            String name = tag.getName();
+            Log.i(TAG, "onItemSelected: " + name + " " + (isSelected ? "selected" : "removed"));
+            if (!isSelected) {
+                getSelectedTag().remove(name);
+            } else {
+                getSelectedTag().add(name);
+            }
+            updateMapUI();
         }
+    }
+
+    private void updateMapUI() {
+        clearMap();
+        for (String tag : getSelectedTag()) {
+            List<User> users = allInterestMap.get(tag);
+
+            for (User user : users) {
+//                user.setName(user.getName());
+//                user.setInterests(user.getInterests());
+//
+//                MarkerOptions markerOptions = new MarkerOptions();
+//                markerOptions.position(user.getLatLng());
+//                markerOptions.title(user.getName());
+//                Marker marker = mMap.addMarker(markerOptions);
+//                marker.setTag(user);
+                addPointToViewPort(user.getLatLng(), user);
+            }
+        }
+        User user = new User();
+        user.setName("Me");
+        user.setInterests(loadDummyTags());
+        addPointToViewPort(userLatLng, user);
     }
 
     private void getAddressByLatLong(LatLng latLong) {
@@ -191,6 +228,7 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
     }
 
     private void clearMap() {
+        mBounds = new LatLngBounds.Builder();
         if (mMap != null) {
             mMap.clear();
         }
@@ -208,6 +246,8 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        loadDummyUsers();
 
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
             @Override
@@ -322,7 +362,7 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
                         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
                     }
                 } else {
-                    Toast.makeText(getContext(), "We're unable to determine your location, Please check whether you have enabled Location Settings or not.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "We're unable to determine your location, Please check whether you have enabled Location Settings or not.", Toast.LENGTH_SHORT).show();
                 }
 
                 likelyPlaces.release();
@@ -350,15 +390,16 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
         addPointToViewPort(newPoint, null);
     }
 
-    private void addPointToViewPort(LatLng newPoint, Object object) {
+    private void addPointToViewPort(LatLng newPoint, User user) {
         if (mMap != null) {
             mBounds.include(newPoint);
 
             final MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.title(user.getName());
             markerOptions.position(newPoint);
 
-//            if (object != null) {
-//            }
+            final Marker marker = mMap.addMarker(markerOptions);
+            marker.setTag(user);
 
             mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mBounds.build(), 50));
         }
@@ -374,5 +415,16 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
                 }
                 break;
         }
+    }
+
+    public List<String> getSelectedTag() {
+        if(selectedTag == null){
+            selectedTag = new ArrayList<>();
+        }
+        return selectedTag;
+    }
+
+    public void setSelectedTag(List<String> selectedTag) {
+        this.selectedTag = selectedTag;
     }
 }
