@@ -98,10 +98,28 @@ public class NearMeFragment extends Fragment implements OnMapReadyCallback, Item
 
     private List<Tag> loadDummyTags() {
         final List<Tag> tags = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
-            Tag tag = new Tag(i, "#TAG_" + (i + 1));
-            tags.add(tag);
-        }
+//        for (int i = 0; i < 8; i++) {
+//            Tag tag = new Tag(i, "#TAG_" + (i + 1));
+//            tags.add(tag);
+//        }
+        Tag tag = new Tag(1,"#nonprofit");
+        tags.add(tag);
+        Tag tag1 = new Tag(2,"#charity");
+        tags.add(tag1);
+        Tag tag2 = new Tag(3,"#road_repairs");
+        tags.add(tag2);
+        Tag tag3 = new Tag(4,"#badminton");
+        tags.add(tag3);
+        Tag tag4 = new Tag(5,"#pooja");
+        tags.add(tag4);
+        Tag tag5 = new Tag(6,"#table_tenis");
+        tags.add(tag5);
+        Tag tag6 = new Tag(7,"#cricket");
+        tags.add(tag6);
+        Tag tag7 = new Tag(8,"#music");
+        tags.add(tag7);
+        Tag tag8 = new Tag(9,"#pool_party");
+        tags.add(tag8);
         return tags;
     }
 

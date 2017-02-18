@@ -5,7 +5,7 @@ String COMPANY_NAME = "Teksystems"
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.0"
+    buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.teksystems.tekathon.teamup"
         minSdkVersion 22
